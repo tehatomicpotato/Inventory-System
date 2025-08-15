@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f4f4;
+    }
+    nav {
+      background-color: #007bff;
+      padding: 1em;
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+    }
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 1.1em;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    .container {
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 1.5em;
+    }
+    table {
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+      border-collapse: collapse;
+      background: white;
+      font-size: 1rem;
+      display: none; /* hidden until data loads */
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      margin-left: 8px;
+      border: 2px solid #ccc;
+      border-top-color: #007bff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    /* TOUCH‐DEVICE OPTIMIZATIONS */
+    @media (hover: none) and (pointer: coarse) {
+      table {
+        max-width: 750px;
+        font-size: 2rem;
+      }
+      th, td {
+        padding: 18px;
+      }
+      .container {
+        width: 96vw;
+        padding: 1rem 2%;
+      }
+      nav a {
+        font-size: 1.2rem;
+        margin: 0 6%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="https://script.google.com/macros/s/AKfycbywIyQ0ne_rCHmJLv9F5BVduUa6ABuMM5AhYg8XTGWsxXq8p5r-EhjPH9IRqQtfZem2/exec?page=dashboard">Dashboard</a>
+    <a href="https://script.google.com/macros/s/AKfycbywIyQ0ne_rCHmJLv9F5BVduUa6ABuMM5AhYg8XTGWsxXq8p5r-EhjPH9IRqQtfZem2/exec?page=form">Form</a>
+    <a href="https://script.google.com/macros/s/AKfycbywIyQ0ne_rCHmJLv9F5BVduUa6ABuMM5AhYg8XTGWsxXq8p5r-EhjPH9IRqQtfZem2/exec?page=inventory">Inventory</a>
+    <a href="https://script.google.com/macros/s/AKfycbywIyQ0ne_rCHmJLv9F5BVduUa6ABuMM5AhYg8XTGWsxXq8p5r-EhjPH9IRqQtfZem2/exec?page=log">Log</a>
+    <a href="https://script.google.com/macros/s/AKfycbywIyQ0ne_rCHmJLv9F5BVduUa6ABuMM5AhYg8XTGWsxXq8p5r-EhjPH9IRqQtfZem2/exec?page=history">History</a>
+  </nav>
+
+  <div class="container">
+    <h1>Current Inventory</h1>
+    <div id="loadingMsg" style="text-align:center; margin-bottom: 20px;">
+      <span style="font-weight: bold; font-size: 1.1rem;">Loading inventory...</span>
+      <div class="spinner"></div>
+    </div>
+
+    <table id="inventoryTable">
+      <thead>
+        <tr><th>Equipment</th><th>Quantity</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    function loadInventory() {
+      google.script.run.withSuccessHandler(function(data) {
+        const tbody = document.querySelector("#inventoryTable tbody");
+        const loadingMsg = document.getElementById("loadingMsg");
+        const table = document.getElementById("inventoryTable");
+
+        tbody.innerHTML = "";
+
+        data.inventory.forEach(row => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${row[0]}</td><td>${row[1]}</td>`;
+          tbody.appendChild(tr);
+        });
+
+        loadingMsg.style.display = "none";
+        table.style.display = "table";
+      }).getPageData("inventory");
+    }
+
+    loadInventory();
+  </script>
+</body>
+</html>

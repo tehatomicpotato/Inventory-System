@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    /* Reset & base — match Form.html */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { font-family: Arial, sans-serif; background: #f9f9f9; line-height: 1.4; }
+
+    /* Top nav — identical to Form.html */
+    nav {
+      background-color: #007bff;
+      padding: 1em;
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+    }
+    nav a {
+      color: white; text-decoration: none; font-weight: bold; font-size: 1.1em;
+    }
+    nav a:hover { text-decoration: underline; }
+
+    .container {
+      padding: 20px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 20px;
+      font-size: 2em;
+    }
+    .hint { text-align:center; color:#555; margin-bottom: 14px; }
+
+    /* Table */
+    .table-wrap { overflow:auto; background:#fff; border-radius:8px; border:1px solid #ddd; }
+    table { width:100%; border-collapse: collapse; }
+    thead th {
+      background:#007bff; color:#fff; text-align:left; padding:.75rem;
+      position: sticky; top: 0; z-index: 1;
+    }
+    tbody td { padding:.6rem .75rem; border-top:1px solid #eee; }
+    tbody tr:hover { background:#f6f9ff; cursor: pointer; }
+    .empty { text-align:center; color:#666; padding: 24px; }
+
+    /* Small helper chips */
+    .chip { display:inline-block; padding:.15rem .45rem; border-radius:999px; font-size:.85rem; font-weight:600; }
+    .chip.out { background:#ffe7e7; color:#a40000; }
+    .chip.in  { background:#e8ffef; color:#046a27; }
+
+    /* Signed-in badge in nav */
+    #signedInBadge { color:#fff; font-weight:600; margin-left:8px; }
+
+    /* Modal (new) */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.55);
+      display: none; align-items: center; justify-content: center; z-index: 2000;
+    }
+    .modal {
+      background: #fff; border-radius: 10px; max-width: 420px; width: 92%;
+      padding: 18px 18px 16px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,.2);
+    }
+    .modal h3 { margin: 4px 0 8px; color:#222; font-size: 1.25rem; text-align:center; }
+    .modal .summary { color:#555; margin: 4px 0 10px; font-size: .95rem; }
+    .modal .actions { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+    .modal .btn {
+      padding: .75rem 1rem; border: none; border-radius: 8px; font-weight: 700;
+      color: #fff; background: #007bff; cursor: pointer; font-size: 1rem; width:100%;
+    }
+    .modal .btn.secondary { background:#6c757d; }
+    .modal .btn.hidden { display:none; }
+    .modal .close-x {
+      position: absolute; right: 10px; top: 8px; font-weight: 800; font-size: 1.3rem;
+      color:#333; cursor: pointer; line-height: 1;
+    }
+
+    /* Mobile tweaks */
+    @media (hover:none) and (pointer:coarse) {
+      nav a { font-size: 2em; }
+      .container { padding: 20px; }
+      thead th, tbody td { padding: 1rem; }
+      .modal .btn { font-size: 1.2rem; padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="https://script.google.com/macros/s/AKfycbywIyQ0ne_rCHmJLv9F5BVduUa6ABuMM5AhYg8XTGWsxXq8p5r-EhjPH9IRqQtfZem2/exec?page=dashboard">Dashboard</a>
+    <a href="https://script.google.com/macros/s/AKfycbywIyQ0ne_rCHmJLv9F5BVduUa6ABuMM5AhYg8XTGWsxXq8p5r-EhjPH9IRqQtfZem2/exec?page=form">Form</a>
+    <a href="https://script.google.com/macros/s/AKfycbywIyQ0ne_rCHmJLv9F5BVduUa6ABuMM5AhYg8XTGWsxXq8p5r-EhjPH9IRqQtfZem2/exec?page=inventory">Inventory</a>
+    <a href="https://script.google.com/macros/s/AKfycbywIyQ0ne_rCHmJLv9F5BVduUa6ABuMM5AhYg8XTGWsxXq8p5r-EhjPH9IRqQtfZem2/exec?page=log">Log</a>
+    <a href="https://script.google.com/macros/s/AKfycbywIyQ0ne_rCHmJLv9F5BVduUa6ABuMM5AhYg8XTGWsxXq8p5r-EhjPH9IRqQtfZem2/exec?page=history">History</a>
+  </nav>
+
+
+ <div class="container">
+    <h1>My Submission History</h1>
+    <div class="hint">Showing only entries created by <strong id="who"></strong>.</div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="min-width:160px;">Date/Time</th>
+            <th>Action</th>
+            <th>Equipment</th>
+            <th>Qty</th>
+            <th>Ticket</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td class="empty" colspan="6">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="historyModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <span id="modalCloseX" class="close-x" title="Close">&times;</span>
+      <h3 id="modalTitle">What would you like to do?</h3>
+      <div id="modalSummary" class="summary"></div>
+      <div class="actions">
+        <button id="modalEdit" class="btn">Edit</button>
+        <button id="modalCheckIn" class="btn hidden">Check In</button>
+        <button id="modalClose" class="btn secondary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+      
+      
+      function navigateTop(url){
+      try { window.top.location.href = url; }
+     catch(e){ window.open(url, '_top'); }
+      }
+
+    /* === constants === */
+    const APP_URL = "https://script.google.com/macros/s/AKfycbywIyQ0ne_rCHmJLv9F5BVduUa6ABuMM5AhYg8XTGWsxXq8p5r-EhjPH9IRqQtfZem2/exec";
+    const TECH_NAME_KEY = 'techName';
+    const EDIT_KEY = 'editEntry';
+
+    /* === identity cache (same key used elsewhere) === */
+    function getSavedTech(){ try { return localStorage.getItem(TECH_NAME_KEY) || ''; } catch { return ''; } }
+    function saveTech(n){ try { localStorage.setItem(TECH_NAME_KEY, n); } catch {} }
+    function clearTech(){ try { localStorage.removeItem(TECH_NAME_KEY); } catch {} }
+
+    function showSignedInBadge(){
+      const who = getSavedTech();
+      const nav = document.querySelector('nav');
+      if (!nav || !who) return;
+      const badge = document.getElementById('signedInBadge');
+      if (badge) badge.textContent = who;
+    }
+
+    /** Modal prompt that reuses your validateTechnician() on server */
+    function showIdentityPrompt({ afterSet } = {}) {
+      if (getSavedTech()) return;
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:2000;';
+      overlay.innerHTML = `
+        <div style="background:#fff;padding:20px;border-radius:10px;max-width:420px;width:92%;text-align:center;">
+          <h3 style="margin-bottom:8px;">Please Login.</h3>
+          <p style="margin:0 0 10px;color:#555;">Enter your first name.</p>
+          <input id="idName" type="text" placeholder="Your name" style="width:100%;padding:.8rem;border:1px solid #ccc;border-radius:6px;font-size:1rem;">
+          <div id="idError" style="min-height:20px;color:#b00020;margin-top:6px;font-size:.95rem;"></div>
+          <button id="idSubmit" style="margin-top:10px;padding:.75rem 1rem;border:none;background:#007bff;color:#fff;border-radius:8px;font-weight:600;cursor:pointer;font-size:1rem;width:100%;">Continue</button>
+        </div>`;
+      document.body.appendChild(overlay);
+
+      const $name = overlay.querySelector('#idName');
+      const $err  = overlay.querySelector('#idError');
+      const $btn  = overlay.querySelector('#idSubmit');
+      $name.focus();
+
+      function fail(msg){ $err.textContent = msg || "Invalid Username."; $btn.disabled = false; $btn.textContent = "Continue"; }
+
+      $btn.onclick = () => {
+        const typed = ($name.value||'').trim();
+        if (!typed) return fail('Please enter your name.');
+        $btn.disabled = true; $btn.textContent = 'Checking…';
+
+        google.script.run.withSuccessHandler(res => {
+          if (!res || !res.ok) return fail("Invalid Username.");
+          const canonical = res.normalized || typed;
+          saveTech(canonical);
+          overlay.remove();
+          showSignedInBadge();
+          if (typeof afterSet === 'function') afterSet(canonical);
+        }).validateTechnician(typed);
+      };
+    }
+
+    function formatStamp(s){
+      // LOG stores `'yyyy-MM-dd HH:mm:ss` with a leading apostrophe to keep the sheet format
+      const clean = String(s || '').replace(/^'/,'');
+      return clean;
+    }
+
+    // (updated) sort utility for objects with .row
+    function sortByNewest(items){
+      return items.slice().sort((a,b)=>{
+        const da = Date.parse(String(a.row[0]).replace(/^'/,'').replace(' ','T')) || 0;
+        const db = Date.parse(String(b.row[0]).replace(/^'/,'').replace(' ','T')) || 0;
+        return db - da;
+      });
+    }
+
+    // Save intent for Form page to consume
+    function setEditIntent(payload){
+      try { localStorage.setItem(EDIT_KEY, JSON.stringify(payload)); } catch {}
+    }
+
+    // Modal helpers
+    const $modal = document.getElementById('historyModal');
+    const $modalX = document.getElementById('modalCloseX');
+    const $modalClose = document.getElementById('modalClose');
+    const $modalEdit = document.getElementById('modalEdit');
+    const $modalCheckIn = document.getElementById('modalCheckIn');
+    const $modalSummary = document.getElementById('modalSummary');
+
+    let __selected = null; // holds the selected row payload
+
+    function openModalFor(item){
+      __selected = item;
+      const [ts, tech, act, eq, qty, ticket, notes] = item.row;
+      $modalSummary.innerHTML = `
+        <div><strong>${act || ''}</strong> · <strong>${eq || ''}</strong></div>
+        <div>Qty: ${qty ?? ''}</div>
+        <div>Ticket: ${ticket || '—'}</div>
+        <div>Date: ${formatStamp(ts) || ''}</div>
+      `;
+      const isCheckout = /^check\s*out$/i.test(String(act||''));
+      $modalCheckIn.classList.toggle('hidden', !isCheckout);
+
+      $modal.style.display = 'flex';
+    }
+
+    function closeModal(){
+      __selected = null;
+      $modal.style.display = 'none';
+    }
+
+    $modalX.onclick = $modalClose.onclick = closeModal;
+
+    $modalEdit.onclick = () => {
+      if (!__selected) return;
+      const [ts, tech, act, eq, qty, ticket, notes] = __selected.row;
+      setEditIntent({
+        mode: 'edit',
+        sheetRow: __selected.sheetRow, // 2-based row index on LOG
+        timestamp: formatStamp(ts),
+        technician: tech,
+        action: act,
+        equipment: eq,
+        quantity: Number(qty),
+        ticket: ticket || '',
+        notes: notes || ''
+      });
+       navigateTop(APP_URL + "?page=form");
+    };
+
+    $modalCheckIn.onclick = () => {
+      if (!__selected) return;
+      const [ts, tech, act, eq, qty, ticket, notes] = __selected.row;
+      setEditIntent({
+        mode: 'checkin',
+        sheetRow: __selected.sheetRow, // kept for reference; submit uses normal flow
+        timestamp: formatStamp(ts),
+        technician: tech,
+        action: 'Check In',
+        equipment: eq,
+        quantity: Number(qty),
+        ticket: ticket || '',
+        notes: notes || ''
+      });
+      navigateTop(APP_URL + "?page=form");
+    };
+
+    function renderRows(items){
+      const tb = document.getElementById('tbody');
+      tb.innerHTML = '';
+      if (!items.length){
+        tb.innerHTML = `<tr><td class="empty" colspan="6">No submissions yet.</td></tr>`;
+        return;
+      }
+      const sorted = sortByNewest(items);
+      for (const it of sorted){
+        // Expected LOG columns: [timestamp, tech, action, equipment, qty, ticket, notes, ip]
+        const [ts, tech, act, eq, qty, tic, note] = it.row;
+        const date = formatStamp(ts);
+        const chipClass = /out/i.test(String(act)) ? 'chip out' : /in/i.test(String(act)) ? 'chip in' : 'chip';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${date}</td>
+          <td><span class="${chipClass}">${act || ''}</span></td>
+          <td>${eq || ''}</td>
+          <td>${qty || ''}</td>
+          <td>${tic || ''}</td>
+          <td>${note || ''}</td>`;
+        tr.addEventListener('click', () => openModalFor(it));
+        tb.appendChild(tr);
+      }
+    }
+
+    function loadHistory(name){
+      document.getElementById('who').textContent = name || '';
+      document.getElementById('tbody').innerHTML = `<tr><td class="empty" colspan="6">Loading…</td></tr>`;
+      google.script.run.withSuccessHandler(data=>{
+        const all = (data && data.log) ? data.log : [];
+        // Build objects and keep the original sheet row index (2-based, since row 1 is header)
+        const mine = [];
+        for (let i = 0; i < all.length; i++) {
+          const row = all[i];
+          if (String(row[1]||'') === name) {
+            mine.push({ row, sheetRow: i + 2 });
+          }
+        }
+        renderRows(mine);
+      }).getPageData("log");
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      showSignedInBadge();
+      const saved = getSavedTech();
+      if (saved) {
+        loadHistory(saved);
+      } else {
+        showIdentityPrompt({ afterSet: loadHistory });
+      }
+    });
+  </script>
+</body>
+</html>

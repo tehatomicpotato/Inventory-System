@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    /* match Form.html reset */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+       font-family: Arial, sans-serif;
+    background: #f9f9f9;
+    line-height: 1.4;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      text-align: center;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 45px; /* keep heading spacing */
+      font-size: 45px; /* keep heading size at 250% */
+    }
+
+    .button-grid {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 25px; /* space between buttons */
+    }
+
+    .nav-button {
+      padding: 34px; /* 187.5% of original padding */
+      font-size: 34px; /* 187.5% of original font size */
+      font-weight: bold;
+      color: white;
+      background-color: #007bff;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      text-decoration: none;
+      display: block;
+      width: 100%;
+      max-width: 800px; /* prevent extra-wide buttons */
+    }
+    input, textarea, button {
+    display: block;
+    width: 100%;
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+    .nav-button:hover {
+      background-color: #0056b3;
+    }
+
+    /* TOUCH‐DEVICE OPTIMIZATIONS */
+    @media (hover: none) and (pointer: coarse) {
+      .container {
+        width: 96vw;
+      }
+
+      h1 {
+        font-size: 40px; /* slightly smaller heading for mobile */
+      }
+
+      .nav-button {
+        font-size: 30px; /* smaller text for mobile */
+        padding: 30px;
+      }
+    }
+
+/* Reuse the same modal look as Form.html */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  max-width: 400px;
+  width: 92%;
+  position: relative;
+}
+.modal-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #333;
+  cursor: pointer;
+}
+.modal-content input[type="text"] {
+  width: 100%;
+  padding: .8rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;        /* NEW: match Form */
+}
+.modal-content button {
+  margin-top: 10px;
+  padding: .75rem 1rem;   /* NEW: match Form */
+  border: none;
+  background: #007bff;
+  color: #fff;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 1rem;        /* NEW: match Form */
+  width: 100%;            /* NEW: match Form */
+}
+
+/* Mobile bump — same idea as Form */
+@media (hover: none) and (pointer: coarse) {
+  .modal-content input[type="text"],
+  .modal-content button {
+    font-size: 1.47rem;
+    padding: 1.26rem;
+  }
+}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Stargel Inventory Dashboard</h1>
+    <div class="button-grid">
+      <a class="nav-button" href="https://script.google.com/macros/s/AKfycbywIyQ0ne_rCHmJLv9F5BVduUa6ABuMM5AhYg8XTGWsxXq8p5r-EhjPH9IRqQtfZem2/exec?page=form">Submit Form</a>
+      <a class="nav-button" href="https://script.google.com/macros/s/AKfycbywIyQ0ne_rCHmJLv9F5BVduUa6ABuMM5AhYg8XTGWsxXq8p5r-EhjPH9IRqQtfZem2/exec?page=inventory">View Inventory</a>
+      <a class="nav-button" href="https://script.google.com/macros/s/AKfycbywIyQ0ne_rCHmJLv9F5BVduUa6ABuMM5AhYg8XTGWsxXq8p5r-EhjPH9IRqQtfZem2/exec?page=log">View Submission Log</a>
+      <a class="nav-button" href="https://script.google.com/macros/s/AKfycbywIyQ0ne_rCHmJLv9F5BVduUa6ABuMM5AhYg8XTGWsxXq8p5r-EhjPH9IRqQtfZem2/exec?page=history">History</a>
+    </div>
+  </div>
+  <script>
+ const TECH_NAME_KEY = 'techName';
+
+  function getSavedTech(){ try { return localStorage.getItem(TECH_NAME_KEY) || ''; } catch { return ''; } }
+  function saveTech(n){ try { localStorage.setItem(TECH_NAME_KEY, n); } catch {} }
+  function clearTech(){ try { localStorage.removeItem(TECH_NAME_KEY); } catch {} }
+
+  function showSignedInBadge() {
+    const who = getSavedTech();
+    if (!who) return;
+    // optional: add a small "Signed in as ..." text to your dashboard header
+    let badge = document.getElementById('signedInBadge');
+    if (!badge) {
+      badge = document.createElement('div');
+      badge.id = 'signedInBadge';
+      badge.style.cssText = 'text-align:center;margin:10px 0;color:#333;font-weight:600;';
+      document.querySelector('.container')?.prepend(badge);
+    }
+    badge.textContent = `Signed in as ${who}`;
+  }
+
+  function showIdentityPrompt({ afterSet } = {}) {
+    if (getSavedTech()) return; // already set
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:2000;';
+    overlay.innerHTML = `
+      <div style="background:#fff;padding:20px;border-radius:10px;max-width:420px;width:92%;text-align:center;">
+        <h3 style="margin-bottom:8px;">Please Login.</h3>
+        <p style="margin:0 0 10px;color:#555;">Enter your first name.</p>
+        <input id="idName" type="text" placeholder="Your name" style="width:100%;padding:.8rem;border:1px solid #ccc;border-radius:6px;">
+        <div id="idError" style="min-height:20px;color:#b00020;margin-top:6px;font-size:.95rem;"></div>
+        <button id="idSubmit" style="margin-top:10px;padding:.7rem 1rem;border:none;background:#007bff;color:#fff;border-radius:8px;font-weight:600;cursor:pointer;">Continue</button>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const $name = overlay.querySelector('#idName');
+    const $err  = overlay.querySelector('#idError');
+    const $btn  = overlay.querySelector('#idSubmit');
+    $name.focus();
+
+    function fail(msg){
+      $err.textContent = msg || "Invalid Username.";
+      $btn.disabled = false;
+      $btn.textContent = "Continue";
+    }
+
+    $btn.onclick = () => {
+      const typed = ($name.value||'').trim();
+      if (!typed) return fail('Please enter your name.');
+      $btn.disabled = true; $btn.textContent = 'Checking…';
+
+      // If you have validateTechnician in Code.js, keep this call.
+      // Otherwise, just save and close (replace the google.script.run block with a direct save).
+      if (google?.script?.run) {
+        google.script.run.withSuccessHandler(res => {
+          if (!res || !res.ok) return fail("Invalid Username.");
+          const canonical = res.normalized || typed;
+          saveTech(canonical);
+          overlay.remove();
+          if (typeof afterSet === 'function') afterSet(canonical);
+          showSignedInBadge();
+        }).validateTechnician(typed);
+      } else {
+        // fallback without validation
+        saveTech(typed);
+        overlay.remove();
+        if (typeof afterSet === 'function') afterSet(typed);
+        showSignedInBadge();
+      }
+    };
+  }
+
+  // Boot on page load: show badge and the exact same modal as Form.html
+  document.addEventListener('DOMContentLoaded', () => {
+    showSignedInBadge();
+    if (!getSavedTech()) {
+      showIdentityPrompt();
+    }
+  });
+
+// warm caches you already had
+google.script.run.getPageData("inventory");
+google.script.run.getPageData("log");
+
+// NEW: If no tech saved, fetch technicians and prompt once.
+if (!hasTech()) {
+  google.script.run.withSuccessHandler(d=>{
+    const techs = (d && d.technicians) ? d.technicians : [];
+    if (techs.length) promptForTechOnDashboard(techs);
+  }).getPageData("form");
+}
+</script>
+</body>
+</html>

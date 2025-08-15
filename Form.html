@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <style>
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0; padding: 0;
+  }
+  html, body { height: 100%; }
+
+  body {
+    font-family: Arial, sans-serif;
+    background: #f9f9f9;
+    line-height: 1.4;
+  }
+  @keyframes pulseGlow {
+    0% { box-shadow: 0 0 0px rgba(255, 255, 255, 0); }
+    50% { box-shadow: 0 0 10px 4px rgba(255, 255, 0, 0.8); }
+    100% { box-shadow: 0 0 0px rgba(255, 255, 255, 0); }
+  }
+  .xp-bar-fill.pulse {
+    animation: pulseGlow 0.6s ease-out;
+  }
+  nav {
+    background-color: #007bff;
+    padding: 1em;
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+}
+  nav a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+  nav a:hover { text-decoration: underline; }
+  .container {
+    padding: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+  h2 {
+    text-align: center;
+    margin-bottom: 1rem;
+    font-size: 1.8rem;
+    color: #333;
+  }
+  label {
+    display: block;
+    margin-top: 0.75rem;
+    font-weight: bold;
+    font-size: 1rem;
+  }
+  select, input, textarea, button {
+    display: block;
+    width: 100%;
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+  button {
+    background: #007bff;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  button:hover { background: #0056b3; }
+  #overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+  }
+  #overlayContent {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 8px;
+    text-align: center;
+    max-width: 400px;
+  }
+  .class-card.muted {
+    opacity: 0.4;
+  }
+  #classSelectionOverlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+  }
+  #classContent {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 8px;
+    text-align: center;
+    max-width: 600px;
+  }
+  @keyframes spinner { to { transform: rotate(360deg) } }
+  .spinner {
+    display: inline-block;
+    width: 18px; height: 18px;
+    border: 2px solid #ccc;
+    border-top-color: #007bff;
+    border-radius: 50%;
+    animation: spinner 0.6s linear infinite;
+    margin-top: 1rem;
+  }
+  /* Wider modal for class selection */
+  #classSelectionOverlay #classContent {
+    max-width: 600px;
+  }
+  /* Flex layout for cards */
+  #classContent .card-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  .class-card {
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    flex: 1 1 150px;
+    max-width: 180px;
+    text-align: center;
+  }
+  .class-card:hover {
+    border-color: #007bff;
+    background: #f0f8ff;
+  }
+  .class-card.selected {
+    border-color: #007bff;
+    box-shadow: 0 0 10px rgba(0,123,255,0.7);
+  }
+  .class-card div { font-size: 1.1rem; font-weight: bold; }
+  .xp-bar-fill {
+    height:100%;
+    background:#4caf50;
+    transition:width 1s ease;
+  }
+  .xp-bar-text {
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    font-weight:bold;
+    font-size:0.9rem;
+    color:#111;
+    pointer-events:none;
+  }
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  .modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    max-width: 400px;
+    position: relative;
+  }
+  .modal-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #333;
+    cursor: pointer;
+  }
+   @media (hover: none) and (pointer: coarse) {
+    label, select, input, textarea, button {
+      font-size: 1.47rem;
+      padding: 1.26rem;
+    }
+    nav {
+    background-color: #007bff;
+    padding: 1em;
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+}
+    nav a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 2em;
+}
+    .container {
+    padding: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+  }
+  #overlayContent { max-width: 400px; }
+  #classContent { max-width: 400px; }
+  #classSelectionOverlay #classContent { max-width: 600px; }
+
+ h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 2em;
+} 
+</style>
+</head>
+
+<body>
+
+    <nav>
+     <a href="https://script.google.com/macros/s/AKfycbywIyQ0ne_rCHmJLv9F5BVduUa6ABuMM5AhYg8XTGWsxXq8p5r-EhjPH9IRqQtfZem2/exec?page=dashboard">Dashboard</a>
+    <a href="https://script.google.com/macros/s/AKfycbywIyQ0ne_rCHmJLv9F5BVduUa6ABuMM5AhYg8XTGWsxXq8p5r-EhjPH9IRqQtfZem2/exec?page=form">Form</a>
+    <a href="https://script.google.com/macros/s/AKfycbywIyQ0ne_rCHmJLv9F5BVduUa6ABuMM5AhYg8XTGWsxXq8p5r-EhjPH9IRqQtfZem2/exec?page=inventory">Inventory</a>
+    <a href="https://script.google.com/macros/s/AKfycbywIyQ0ne_rCHmJLv9F5BVduUa6ABuMM5AhYg8XTGWsxXq8p5r-EhjPH9IRqQtfZem2/exec?page=log">Log</a>
+    <a href="https://script.google.com/macros/s/AKfycbywIyQ0ne_rCHmJLv9F5BVduUa6ABuMM5AhYg8XTGWsxXq8p5r-EhjPH9IRqQtfZem2/exec?page=history">History</a>
+    
+    </nav>
+
+<div class="container">
+   <h1>Supply Checkout Form</h1>
+
+  <form id="form" onsubmit="onSubmit(event)">
+    <label for="technicianInput">Technician Name:</label>
+    <input id="technicianInput" type="text" autocomplete="name" placeholder="Type your name" required>
+    <input id="technician" name="technician" type="hidden">
+    <small id="idHelp" style="display:block;margin-top:-8px;color:#555;"></small>
+
+    <label for="action">Action:</label>
+    <select id="action" required>
+      <option value="" disabled selected>Select Check Out or Check In</option>
+      <option value="Check Out">Check Out</option>
+      <option value="Check In">Check In</option>
+    </select>
+
+    <label for="equipment">Equipment:</label>
+    <select id="equipment" required>
+      <option value="" disabled selected>Select Equipment/Tool</option>
+    </select>
+
+    <label for="quantity">Quantity:</label>
+    <input type="number" id="quantity" required min="1">
+
+    <label for="ticket">Ticket Number:</label>
+    <input type="number" id="ticket">
+
+    <label for="notes">Notes:</label>
+    <textarea id="notes" rows="2"></textarea>
+
+    <button type="submit">Submit</button>
+  </form>
+</div>
+
+<div id="overlay">
+  <div id="overlayContent"></div>
+</div>
+
+<div id="classSelectionOverlay" style="display: none;">
+  <div id="classContent" style="background:white; padding:20px; border-radius:10px; text-align:center; max-width:600px; margin:auto;">
+    <h3>Choose Your Class</h3>
+
+    <div class="card-container">
+      <!-- Computer Wizard -->
+      <div class="class-card" onclick="submitClassChoice('Computer Wizard', 'https://i.imgur.com/DgNzt2R.png')">
+        <img src="https://i.imgur.com/DgNzt2R.png" alt="Computer Wizard" width="150" height="150" style="max-width:150px; border-radius:8px;">
+        <div>Computer Wizard</div>
+      </div>
+
+      <!-- Keyboard Warrior -->
+      <div class="class-card" onclick="submitClassChoice('Keyboard Warrior', 'https://i.imgur.com/sGMQWsu.png')">
+        <img src="https://i.imgur.com/sGMQWsu.png" alt="Keyboard Warrior" width="150" height="150" style="max-width:150px; border-radius:8px;">
+        <div>Keyboard Warrior</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+
+  
+
+function populateDropdowns(data) {
+  const t = document.getElementById('technician'),
+        e = document.getElementById('equipment');
+  t.length = 1; e.length = 1;
+  data.technicians.forEach(n => {
+    const o = document.createElement("option");
+    o.value = o.textContent = n;
+    t.appendChild(o);
+  });
+  data.equipment.forEach(i => {
+    const o = document.createElement("option");
+    o.value = o.textContent = i;
+    e.appendChild(o);
+  });
+}
+
+
+google.script.run.withSuccessHandler(function(data) {
+  // Populate ONLY the equipment select (technician is now handled via identity)
+  const e = document.getElementById('equipment');
+  if (e && e.tagName === 'SELECT') {
+    e.length = 1;
+    data.equipment.forEach(i => {
+      const o = document.createElement("option");
+      o.value = o.textContent = i;
+      e.appendChild(o);
+    });
+  }
+
+  // Identity handling
+  const saved = getSavedTech();
+  if (saved && Array.isArray(data.technicians) && data.technicians.includes(saved)) {
+    applyIdentityToForm(saved);
+  } else {
+    // first visit on this device OR name not found — prompt and then apply
+    showIdentityPrompt({ afterSet: applyIdentityToForm });
+  }
+}).getPageData("form");
+
+
+/* === PUBLIC IP (optional) === */
+let publicIP = null;
+(async () => {
+  try {
+    const r = await fetch('https://api.ipify.org?format=json');
+    if (r.ok) publicIP = (await r.json()).ip || null;
+  } catch (_) {}
+})();
+
+/* === SUBMIT HANDLER === */
+async function onSubmit(e) {
+  e.preventDefault();
+
+  const nameTyped = document.getElementById('technicianInput').value.trim();
+  if (!nameTyped) { alert('Please enter your name'); return; }
+
+  const btn = document.querySelector("button[type=submit]");
+  const ov  = document.getElementById("overlay");
+  const oc  = document.getElementById("overlayContent");
+
+  btn.disabled = true;
+  btn.innerText = "Submitting...";
+  ov.style.display = "flex";
+  oc.innerHTML = `Submitting... <div class="spinner"></div>`;
+
+  // 1) Validate name against TECHNICIANS
+  google.script.run
+    .withSuccessHandler(function(result){
+      if (!result || !result.ok) {
+        btn.disabled = false;
+        btn.innerText = "Submit";
+        oc.innerHTML = "That name isn't on the TECHNICIANS list. Please check spelling or contact an admin.";
+        setTimeout(()=> ov.style.display = "none", 2500);
+        return;
+      }
+
+      // Save canonical capitalization and lock UI for future loads
+      const canonical = result.normalized || nameTyped;
+      saveTech(canonical);
+      applyIdentityToForm(canonical); // was applyIdentityUI(...)
+      // Hidden #technician is already set by applyIdentityToForm; this is harmless redundancy:
+      const hiddenTech = document.getElementById('technician');
+      if (hiddenTech) hiddenTech.value = canonical;
+
+      const data = {
+        technician: canonical,
+        action:     document.getElementById('action').value,
+        equipment:  document.getElementById('equipment').value,
+        quantity:   document.getElementById('quantity').value,
+        ticket:     document.getElementById('ticket').value,
+        notes:      document.getElementById('notes').value,
+        ip:         publicIP
+      };
+
+      google.script.run
+        .withSuccessHandler(handleResponse)
+        .withFailureHandler(err => {
+          oc.innerText = "Unexpected error. Try again.";
+          setTimeout(() => ov.style.display = "none", 3000);
+          console.error(err);
+          btn.disabled = false; btn.innerText = "Submit";
+        })
+        .submitForm(data);
+    })
+    .validateTechnician(nameTyped);
+}
+
+/* === RESPONSE HANDLER (unchanged) === */
+function handleResponse(res) {
+  const btn = document.querySelector("button[type=submit]");
+  const ov  = document.getElementById("overlay");
+  const oc  = document.getElementById("overlayContent");
+
+  btn.disabled = false;
+  btn.innerText = "Submit";
+
+  // EARLY EXIT: non-character techs
+  if (!res.hasCharacter) {
+    oc.innerHTML = "Submission logged.";
+    setTimeout(() => {
+      ov.style.display = "none";
+      document.getElementById("form").reset();
+    }, 2000);
+    return;
+  }
+  function showClassSelection() {
+    const cards = document.querySelectorAll(".class-card");
+    cards.forEach(card => {
+      card.classList.remove("selected", "muted");
+      card.style.opacity = "";
+      const spinner = card.querySelector(".spinner");
+      if (spinner) spinner.remove();
+    });
+    document.getElementById("classSelectionOverlay").style.display = "flex";
+  }
+
+
+
+  // Build the message
+  let msg = res.message;
+  if (res.leveledUp) msg += `<br><strong>You leveled up!</strong>`;
+
+  if (res.xpBefore != null) {
+    const totalXPBefore = res.xpBefore;
+    const xpNeeded      = res.xpNeeded;
+    const levelStartXP  = Math.floor(totalXPBefore / xpNeeded) * xpNeeded;
+    const threshold     = levelStartXP + xpNeeded;
+    const startPct      = Math.floor(((totalXPBefore - levelStartXP) / xpNeeded) * 100);
+
+    msg += `
+      <div style="margin-top:15px">
+        <strong>Level ${res.currentLevel}</strong>
+        <div style="background:#ddd;border-radius:6px;overflow:hidden;height:20px;position:relative;margin-top:5px;">
+          <div id="xpBar" class="xp-bar-fill" style="width:${startPct}%"></div>
+          <div id="xpBarText" class="xp-bar-text">${totalXPBefore} / ${threshold}</div>
+        </div>
+      </div>`;
+  }
+
+  oc.innerHTML = msg;
+
+  // Animate XP bar (two-phase + pulse)
+  setTimeout(() => {
+    if (res.xpBefore == null) return;
+
+    const bar              = document.getElementById("xpBar");
+    const text             = document.getElementById("xpBarText");
+    const totalXPBefore    = res.xpBefore;
+    const totalXPAfter     = res.xpAfter;
+    const xpNeeded         = res.xpNeeded;
+    const levelStartXP     = Math.floor(totalXPBefore / xpNeeded) * xpNeeded;
+    const levelEndXP       = levelStartXP + xpNeeded;
+    const didLevelUp       = totalXPAfter >= levelEndXP;
+
+    if (!didLevelUp) {
+      // Simple fill
+      const pct = ((totalXPAfter - levelStartXP) / xpNeeded) * 100;
+      bar.style.width = `${pct}%`;
+      text.textContent = `${totalXPAfter} / ${levelEndXP}`;
+
+    } else {
+      // Phase 1: fill to 100%
+      bar.style.width = "100%";
+      text.textContent = `${levelEndXP} / ${levelEndXP}`;
+
+      // Pulse then Phase 2
+      setTimeout(() => {
+        bar.classList.add("pulse");
+        setTimeout(() => {
+          bar.classList.remove("pulse");
+
+          const xpIntoNext     = totalXPAfter - levelEndXP;
+          const nextThreshold  = levelEndXP + xpNeeded;
+          const remPct         = (xpIntoNext / xpNeeded) * 100;
+
+          // reset & animate remainder
+          bar.style.transition = "none";
+          bar.style.width      = "0%";
+          void bar.offsetWidth;               // force reflow
+          bar.style.transition = "width 1s ease";
+          bar.style.width      = `${remPct}%`;
+          text.textContent     = `${totalXPAfter} / ${nextThreshold}`;
+        }, 600);
+      }, 1000);
+    }
+  }, 100);
+
+  // Tear down overlay & then class/reward/reset
+  setTimeout(() => {
+    ov.style.display = "none";
+    if (res.needsClassChoice) showClassSelection();
+    else if (res.reward)         showRewardModal(res.reward);
+    else                         document.getElementById("form").reset();
+  }, 4000);
+}
+function showRewardModal(reward) {
+  const rarity = reward.rarity || "";
+  const category = reward.category || "";
+  const name = reward.name || "";
+  const flavor = reward.flavor || "";
+
+  const rewardModalContent = `
+    <div class="modal-content">
+      <span class="modal-close" onclick="closeRewardModal()">&times;</span>
+      <h2>You got a ${rarity} ${category}!</h2>
+      <h3>${name}</h3>
+      <p>${flavor}</p>
+      <button onclick="closeRewardModal()">Close</button>
+    </div>
+  `;
+
+  const rewardOverlay = document.createElement("div");
+  rewardOverlay.id = "rewardModal";
+  rewardOverlay.className = "modal-overlay";
+  rewardOverlay.innerHTML = rewardModalContent;
+
+  document.body.appendChild(rewardOverlay);
+}
+
+function closeRewardModal() {
+  const modal = document.getElementById("rewardModal");
+  if (modal) modal.remove();
+  document.getElementById("form").reset();
+}
+
+
+
+function submitClassChoice(cls, imgSrc) {
+  const tech = document.getElementById("technician").value;
+  if (!tech) return alert("Select your name first.");
+
+  const cards = Array.from(document.querySelectorAll(".class-card"));
+  // highlight the picked card, fade the rest
+  cards.forEach(card => {
+    const isChosen = card.textContent.trim() === cls;
+    card.classList.toggle("selected", isChosen);
+    card.classList.toggle("muted",   !isChosen);
+    
+    // add or remove spinner
+    let spinner = card.querySelector(".spinner");
+    if (isChosen) {
+      if (!spinner) {
+        spinner = document.createElement("div");
+        spinner.className = "spinner";
+        spinner.style.marginTop = "10px";
+        card.appendChild(spinner);
+      }
+    } else if (spinner) {
+      spinner.remove();
+    }
+  });
+
+  google.script.run
+    .withSuccessHandler(() => {
+      document.getElementById("classSelectionOverlay").style.display = "none";
+      showClassModal(cls, imgSrc);
+    })
+    .setUserClass(cls, tech);
+}
+
+function showClassModal(cls, imgSrc) {
+  const modal = document.createElement("div");
+  modal.className = "modal-overlay";
+  modal.innerHTML = `
+    <div class="modal-content">
+      <span class="modal-close" onclick="this.closest('.modal-overlay').remove(); document.getElementById('form').reset();">&times;</span>
+      <img src="${imgSrc}" alt="${cls}" style="max-width:150px; border-radius:8px; margin-bottom:15px;">
+      <h3>You are now a ${cls}!</h3>
+      <button onclick="this.closest('.modal-overlay').remove(); document.getElementById('form').reset();" style="margin-top:15px; padding:8px 16px; font-size:1rem; background:#007bff; color:white; border:none; border-radius:5px; cursor:pointer;">Close</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+const TECH_NAME_KEY = 'techName';
+
+function getSavedTech(){ try { return localStorage.getItem(TECH_NAME_KEY) || ''; } catch { return ''; } }
+function saveTech(n){ try { localStorage.setItem(TECH_NAME_KEY, n); } catch {} }
+function clearTech(){ try { localStorage.removeItem(TECH_NAME_KEY); } catch {} }
+
+
+/** Fill hidden #technician and lock the visible input */
+function applyIdentityToForm(name){
+  const input  = document.getElementById('technicianInput'); // visible text field
+  const hidden = document.getElementById('technician');      // hidden field used on submit
+  const help   = document.getElementById('idHelp');
+  if (!input || !hidden) return;
+
+  input.value  = name || '';
+  hidden.value = name || '';
+
+  if (name) {
+    input.setAttribute('readonly','readonly');
+    input.style.background = '#f1f5ff';
+    if (help) help.innerHTML = `Signed in as <strong>${name}</strong> · <a href="#" id="switchUser">Switch user</a>`;
+  } else {
+    input.removeAttribute('readonly');
+    input.style.background = '';
+    if (help) help.textContent = '';
+  }
+
+  setTimeout(() => {
+    const sw = document.getElementById('switchUser');
+    if (sw) sw.onclick = (e) => {
+      e.preventDefault();
+      clearTech();
+      applyIdentityToForm('');
+      showIdentityPrompt({ afterSet: applyIdentityToForm });
+    };
+  }, 0);
+}
+
+/** Modal identity prompt that validates on server, then saves & applies */
+function showIdentityPrompt(options = {}) {
+  if (getSavedTech()) return;
+  const { afterSet } = options;
+
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:2000;';
+  overlay.innerHTML = `
+    <div style="background:#fff;padding:20px;border-radius:10px;max-width:420px;width:92%;text-align:center;">
+      <h3 style="margin-bottom:8px;">Please Login.</h3>
+      <p style="margin:0 0 10px;color:#555;">Enter your first name.</p>
+      <input id="idName" type="text" placeholder="Your name" style="width:100%;padding:.8rem;border:1px solid #ccc;border-radius:6px;font-size:1rem;">
+      <div id="idError" style="min-height:20px;color:#b00020;margin-top:6px;font-size:.95rem;"></div>
+      <button id="idSubmit" style="margin-top:10px;padding:.75rem 1rem;border:none;background:#007bff;color:#fff;border-radius:8px;font-weight:600;cursor:pointer;font-size:1rem;width:100%;">Continue</button>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const $name = overlay.querySelector('#idName');
+  const $err  = overlay.querySelector('#idError');
+  const $btn  = overlay.querySelector('#idSubmit');
+  $name.focus();
+
+  function fail(msg){
+    $err.textContent = msg || "Invalid Username.";
+    $btn.disabled = false;
+    $btn.textContent = "Continue";
+  }
+
+  $btn.onclick = () => {
+    const typed = ($name.value||'').trim();
+    if (!typed) return fail('Please enter your name.');
+    $btn.disabled = true; $btn.textContent = 'Checking…';
+
+    google.script.run.withSuccessHandler(res => {
+      if (!res || !res.ok) return fail("Invalid Username.");
+      const canonical = res.normalized || typed;
+      saveTech(canonical);
+      overlay.remove();
+      if (typeof afterSet === 'function') afterSet(canonical);
+      showSignedInBadge();
+    }).validateTechnician(typed);
+  };
+}
+
+
+/* === BOOT === */
+document.addEventListener('DOMContentLoaded', () => {
+
+  const saved = getSavedTech();
+  if (saved) applyIdentityToForm(saved);
+  else       showIdentityPrompt({ afterSet: applyIdentityToForm });
+});
+
+
+/*Keyboard Part */
+
+
+
+// Preload data for other pages
+google.script.run.getPageData("inventory");
+google.script.run.getPageData("log");
+</script>
+
+
+
+
+<script>
+
+ const APP_URL = "https://script.google.com/macros/s/AKfycbywIyQ0ne_rCHmJLv9F5BVduUa6ABuMM5AhYg8XTGWsxXq8p5r-EhjPH9IRqQtfZem2/exec";
+
+  function navigateTop(url){
+    try { window.top.location.href = url; }
+    catch(e){ window.open(url, '_top'); }
+  }
+
+/* ===== Edit / Check-in handoff from History ===== */
+const EDIT_KEY = 'editEntry';
+
+function getEditIntent(){
+  try { return JSON.parse(localStorage.getItem(EDIT_KEY) || 'null'); } catch { return null; }
+}
+function clearEditIntent(){ try { localStorage.removeItem(EDIT_KEY); } catch {} }
+
+// Ensure an option exists in a <select> before setting value
+function ensureOption(select, value){
+  if (!select) return;
+  const exists = Array.from(select.options).some(o => o.value === value);
+  if (!exists && value){
+    const opt = document.createElement('option');
+    opt.value = opt.textContent = value;
+    select.appendChild(opt);
+  }
+}
+
+function showSaveOverlay(text){
+    document.getElementById('saveText').textContent = text || 'Saving…';
+    document.getElementById('saveSpinner').style.display = 'inline-block';
+    document.getElementById('saveCheck').style.display = 'none';
+    document.getElementById('saveOverlay').style.display = 'flex';
+  }
+  function showSaveSuccess(text){
+    document.getElementById('saveText').textContent = text || 'Changes saved successfully.';
+    document.getElementById('saveSpinner').style.display = 'none';
+    document.getElementById('saveCheck').style.display = 'inline-block';
+  }
+  function hideSaveOverlay(){
+    document.getElementById('saveOverlay').style.display = 'none';
+  }
+
+
+
+
+
+
+
+function enterEditOrCheckinMode(intent){
+  if (!intent) return;
+
+  const $action = document.getElementById('action');
+  const $equip  = document.getElementById('equipment');
+  const $qty    = document.getElementById('quantity');
+  const $ticket = document.getElementById('ticket');
+  const $notes  = document.getElementById('notes');
+  const $submit = document.querySelector('button[type="submit"]');
+
+  // Make sure the dropdown contains the values we need
+  ensureOption($action, intent.action);
+  ensureOption($equip,  intent.equipment);
+
+  // Prefill
+  $action.value = intent.mode === 'checkin' ? 'Check In' : intent.action;
+  $equip.value  = intent.equipment;
+  $qty.value    = intent.quantity || 1;
+  $ticket.value = intent.ticket || '';
+  $notes.value  = intent.notes || '';
+
+  // Lock identity to the cached tech (the page already locks via applyIdentityToForm)
+  if (getSavedTech() && getSavedTech().toLowerCase() !== String(intent.technician).toLowerCase()) {
+    // If somehow tech differs, keep currently signed-in tech and ignore the mismatch.
+  }
+
+  if (intent.mode === 'edit') {
+    // Lock everything but Ticket/Notes
+    $action.disabled = true;
+    $equip.disabled  = true;
+    $qty.disabled    = true;
+    $ticket.disabled = false;
+    $notes.disabled  = false;
+
+    // Hide standard submit; show temporary "editing" notice (we'll add Save/Cancel next)
+    if ($submit) $submit.style.display = 'none';
+
+    // Simple inline controls for now:
+    let panel = document.getElementById('editPanel');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.id = 'editPanel';
+      panel.style.marginTop = '10px';
+      panel.innerHTML = `
+        <button id="btnCancelEdit" type="button" class="btn-secondary" style="padding:.75rem 1rem;border:none;background:#6c757d;color:#fff;border-radius:8px;font-weight:600;cursor:pointer;margin-right:8px;">Cancel</button>
+        <button id="btnSaveEdit"   type="button" style="padding:.75rem 1rem;border:none;background:#007bff;color:#fff;border-radius:8px;font-weight:600;cursor:pointer;">Save Changes</button>
+        <button id="btnConvertCheckin" type="button" style="padding:.75rem 1rem;border:none;background:#28a745;color:#fff;border-radius:8px;font-weight:600;cursor:pointer; margin-left:8px; ${/^check\s*out$/i.test(intent.action)?'':'display:none'}">Check Back In</button>
+      `;
+      document.getElementById('form').appendChild(panel);
+    }
+
+    document.getElementById('btnCancelEdit').onclick = () => {
+      clearEditIntent();
+      navigateTop(APP_URL + "?page=history");
+    };
+
+    // Minimal “Save Changes” for Ticket + Notes using the sheet row we stored
+  document.getElementById('btnSaveEdit').onclick = () => {
+  const row = Number(intent.sheetRow);
+  const newTicket = String($ticket.value || '');
+  const newNotes  = String($notes.value  || '');
+  if (!row || row < 2) return alert("Invalid row reference.");
+
+  showSaveOverlay('Saving…');
+
+  google.script.run
+    .withSuccessHandler(ok => {
+      if (ok && ok.updated) {
+        clearEditIntent();
+        showSaveSuccess('Changes saved successfully.');
+        setTimeout(() => navigateTop(APP_URL + "?page=history"), 900); // brief pause to show success
+      } else {
+        hideSaveOverlay();
+        alert("Could not save. Try again.");
+      }
+    })
+    .withFailureHandler(err => {
+      hideSaveOverlay();
+      alert("Save failed: " + (err && err.message ? err.message : err));
+    })
+    .updateLogTicketNotes(row, newTicket, newNotes);
+};
+
+
+
+  } else if (intent.mode === 'checkin') {
+    // Force check-in behavior: equip locked, quantity editable, standard submit visible
+    $action.disabled = true;  // locked to Check In
+    $equip.disabled  = true;
+    $qty.disabled    = false;
+    if ($submit) $submit.style.display = ''; // keep normal submit
+
+    // Optional: small hint
+    const hint = document.createElement('div');
+    hint.style.cssText = 'margin-top:6px;color:#555;';
+    hint.textContent = 'You are checking items back in from a previous checkout.';
+    document.getElementById('form').insertBefore(hint, document.getElementById('form').firstChild);
+  }
+}
+
+// After your existing getPageData("form") success handler runs and identity is applied,
+// let’s bootstrap the intent. Hook DOMContentLoaded to run a bit later:
+document.addEventListener('DOMContentLoaded', () => {
+  // Wait until equipment options are populated; then apply intent
+  setTimeout(() => enterEditOrCheckinMode(getEditIntent()), 150);
+});
+
+// Clear the intent after a normal submit succeeds
+const _origHandleResponse = (typeof handleResponse === 'function') ? handleResponse : null;
+window.handleResponse = function(res){
+  clearEditIntent();
+  if (_origHandleResponse) _origHandleResponse(res);
+};
+</script>
+<style>
+  #saveOverlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;
+    align-items:center;justify-content:center;z-index:3000}
+  #saveOverlay .panel{background:#fff;padding:18px 22px;border-radius:10px;
+    box-shadow:0 10px 30px rgba(0,0,0,.2);display:flex;align-items:center;gap:12px;min-width:280px}
+  .save-spinner{width:20px;height:20px;border:3px solid #e0e0e0;border-top-color:#007bff;
+    border-radius:50%;animation:save-spin .7s linear infinite}
+  @keyframes save-spin{to{transform:rotate(360deg)}}
+  #saveOverlay .check{display:none;width:20px;height:20px;border-radius:50%;background:#28a745;position:relative}
+  #saveOverlay .check:after{content:'';position:absolute;left:6px;top:2px;width:6px;height:12px;border:solid #fff;border-width:0 3px 3px 0;transform:rotate(45deg)}
+</style>
+
+<div id="saveOverlay" role="dialog" aria-modal="true">
+  <div class="panel">
+    <div class="save-spinner" id="saveSpinner"></div>
+    <div class="check" id="saveCheck"></div>
+    <div id="saveText" aria-live="polite">Saving…</div>
+  </div>
+</div>
+
+</body>
+</html>
