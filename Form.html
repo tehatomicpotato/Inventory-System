@@ -409,6 +409,19 @@ let publicIP = null;
   } catch (_) {}
 })();
 
+// Rewrite <nav> links to local files when running on GitHub Pages
+document.addEventListener('DOMContentLoaded', () => {
+  const HOSTED = /github\.io$/.test(location.hostname);
+  if (!HOSTED) return;
+  const map = { dashboard:'Dashboard', form:'Form', inventory:'Inventory', log:'Log', history:'History' };
+  document.querySelectorAll('nav a').forEach(a => {
+    const m = a.href.match(/[?&]page=(dashboard|form|inventory|log|history)/i);
+    if (m) a.href = map[m[1].toLowerCase()] + ".html";
+  });
+});
+
+
+  
 /* === SUBMIT HANDLER === */
 async function onSubmit(e) {
   e.preventDefault();
@@ -942,4 +955,5 @@ window.handleResponse = function(res){
 
 </body>
 </html>
+
 
